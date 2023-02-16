@@ -1,0 +1,12 @@
+{
+  "one_time": false,
+  "buttons": [
+    [{
+      "action": {
+        "type": "text",
+        "label": "🔍Начать поиск"
+      },
+      "color": "positive"
+    }]
+  ]
+}

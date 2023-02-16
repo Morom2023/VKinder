@@ -1,33 +1,10 @@
 from main import bot
+from vk_api.utils import get_random_id
 import json
 
-
-def get_button(text, color):
-    return {
-        "action": {
-            "type": "text",
-            "payload": "{\"button\": \"" + "1" + "\"}",
-            "label": f"{text}"
-        },
-        "color": f"{color}"
-    }
-
-
-keyboard = {
-    "one_time": False,
-    "buttons": [
-        [get_button('Начать поиск', 'primary')],
-        [get_button('Вперёд', 'secondary')]
-    ]
-}
-
-
-def sender(user_id, text):
+def sender(user_id,text,id_keyboard):
     bot.vk.method('messages.send', {'user_id': user_id,
                                     'message': text,
-                                    'random_id': 0,
-                                    'keyboard': keyboard})
+                                    'random_id': get_random_id(),
+                                    'keyboard': open(id_keyboard, 'r', encoding='UTF-8').read()})
 
-
-keyboard = json.dumps(keyboard, ensure_ascii=False).encode('utf-8')
-keyboard = str(keyboard.decode('utf-8'))
