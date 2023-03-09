@@ -3,17 +3,19 @@ from xmlrpc.client import boolean
 from keyboard import sender
 from main import *
 
-
+global users
 for event in bot.longpoll.listen():
     if event.type == VkEventType.MESSAGE_NEW and event.to_me:
         request = event.text.lower()
         user_id = str(event.user_id)
+        currentUser = bot.user(user_id)
         msg = event.text.lower()
         sender(user_id, 'Выполняю','menu.json')
         if request == '🔍начать поиск':
             creating_database()
-            bot.write_msg(user_id, f'Привет, {bot.name(user_id)}')
-            if isinstance(bot.find_user(user_id),str):
+
+            bot.write_msg(user_id, f'Привет, {currentUser["first_name"]}')
+            if isinstance(bot.find_user(user_id,currentUser),str):
                 bot.find_persons(user_id, offset)
             sender(user_id, 'Жми на кнопку "Вперёд','menusearch.json')
         elif request == '🗺️вперёд':

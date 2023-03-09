@@ -21,43 +21,30 @@ class VKBot:
                                          'message': message,
                                          'random_id': get_random_id()})
 
-    def name(self, user_id):
+    def user(self, user_id):
         """ПОЛУЧЕНИЕ ИМЕНИ ПОЛЬЗОВАТЕЛЯ, КОТОРЫЙ НАПИСАЛ БОТУ"""
         url = f'https://api.vk.com/method/users.get'
         params = {'access_token': user_token,
                   'user_ids': user_id,
+                  'fields': 'sex,city',
                   'v': '5.131'}
         repl = requests.get(url, params=params)
         response = repl.json()
         try:
             information_dict = response['response']
-            for i in information_dict:
-                for key, value in i.items():
-                    first_name = i.get('first_name')
-                    return first_name
+            return information_dict[0]
         except KeyError:
             self.write_msg(user_id, 'Ошибка получения токена, введите токен в переменную - user_token')
 
-    def get_sex(self, user_id):
+    def get_sex(self, user_id, sex):
+
         """ПОЛУЧЕНИЕ ПОЛА ПОЛЬЗОВАТЕЛЯ, МЕНЯЕТ НА ПРОТИВОПОЛОЖНЫЙ"""
-        url = f'https://api.vk.com/method/users.get'
-        params = {'access_token': user_token,
-                  'user_ids': user_id,
-                  'fields': 'sex',
-                  'v': '5.131'}
-        repl = requests.get(url, params=params)
-        response = repl.json()
-        try:
-            information_list = response['response']
-            for i in information_list:
-                if i.get('sex') == 2:
-                    find_sex = 1
-                    return find_sex
-                elif i.get('sex') == 1:
-                    find_sex = 2
-                    return find_sex
-        except KeyError:
-            self.write_msg(user_id, 'Ошибка получения токена, введите токен в переменную - user_token')
+        if sex == 2:
+            find_sex = 1
+            return find_sex
+        elif sex == 1:
+            find_sex = 2
+            return find_sex
 
     def get_age_low(self, user_id):
         """ПОЛУЧЕНИЕ НИЖНЕЙ ГРАНИЦЫ ДЛЯ ПОИСКА"""
@@ -175,7 +162,8 @@ class VKBot:
                     return str(city.get('title'))                       
         except KeyError:
             self.write_msg(user_id, 'Ошибка получения токена')
-    def find_user(self, user_id):
+    
+    def find_user(self,user_id, currentUser):
         """ПОИСК ЧЕЛОВЕКА ПО ПОЛУЧЕННЫМ ДАННЫМ"""
         age_from = self.get_age_low(user_id)
         age_to = self.get_age_high(user_id)
@@ -183,13 +171,13 @@ class VKBot:
              url = f'https://api.vk.com/method/users.search'
              params = {'access_token': user_token,
                        'v': '5.131',
-                       'sex': self.get_sex(user_id),
+                       'sex': self.get_sex(user_id, currentUser["sex"]),
                        'age_from': age_from,
                        'age_to': age_to,
                        'city': self.find_city(user_id),
                        'fields': 'is_closed, id, first_name, last_name',
                        'status': '1' or '6',
-                       'count': 500}
+                       'count': 10}
              resp = requests.get(url, params=params)
              resp_json = resp.json()
              try:

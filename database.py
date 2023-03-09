@@ -142,3 +142,4 @@ def creating_database():
     create_table_users()
     create_table_seen_users()
     create_table_favorites()
+
