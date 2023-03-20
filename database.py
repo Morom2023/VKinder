@@ -11,18 +11,18 @@ connection = psycopg2.connect(
 connection.autocommit = True
 
 
-def create_table_users():
+def create_table_seen_users():
     """СОЗДАНИЕ ТАБЛИЦЫ USERS (НАЙДЕННЫЕ ПОЛЬЗОВАТЕЛИ"""
     with connection.cursor() as cursor:
         cursor.execute(
-            """CREATE TABLE IF NOT EXISTS users(
+            """CREATE TABLE IF NOT EXISTS seen_users(
                 id serial,
                 first_name varchar(50) NOT NULL,
                 last_name varchar(25) NOT NULL,
                 vk_id varchar(20) NOT NULL PRIMARY KEY,
                 vk_link varchar(50));"""
         )
-    print("[INFO] Table USERS was created.")
+    print("[INFO] Table SEEN_USERS was created.")
 
 def create_table_favorites():
     """СОЗДАНИЕ ТАБЛИЦЫ favorites (фавориты"""
@@ -38,24 +38,14 @@ def create_table_favorites():
     print("[INFO] Table currentuser was created.")
 
 
-def create_table_seen_users():  # references users(vk_id)
-    """СОЗДАНИЕ ТАБЛИЦЫ SEEN_USERS (ПРОСМОТРЕННЫЕ ПОЛЬЗОВАТЕЛИ"""
-    with connection.cursor() as cursor:
-        cursor.execute(
-            """CREATE TABLE IF NOT EXISTS seen_users(
-            id serial,
-            vk_id varchar(50) PRIMARY KEY);"""
-        )
-    print("[INFO] Table SEEN_USERS was created.")
 
-
-def insert_data_users(first_name, last_name, vk_id, vk_link):
-    """ВСТАВКА ДАННЫХ В ТАБЛИЦУ USERS"""
+def insert_data_seen_users(first_name, last_name, vk_id, vk_link):
+    """ВСТАВКА ДАННЫХ В ТАБЛИЦУ SEEN_USERS"""
     first_name = first_name.replace("'", '') 
     last_name = last_name.replace("'", '') 
     with connection.cursor() as cursor:
         cursor.execute(
-            f"""INSERT INTO users (first_name, last_name, vk_id, vk_link) 
+            f"""INSERT INTO seen_users (first_name, last_name, vk_id, vk_link) 
             VALUES ('{first_name}', '{last_name}', '{vk_id}', '{vk_link}')
             ON CONFLICT(vk_id) DO UPDATE SET
             first_name = '{first_name}', last_name = '{last_name}', vk_link = '{vk_link}';"""
@@ -65,44 +55,27 @@ def insert_data_favorites(vk_id):
     """ВСТАВКА ДАННЫХ В ТАБЛИЦУ favorites"""
     with connection.cursor() as cursor:
         cursor.execute(
-            f"""INSERT INTO favorites SELECT * FROM users WHERE vk_id = '{vk_id}' ON CONFLICT DO NOTHING;"""
+            f"""INSERT INTO favorites SELECT * FROM seen_users WHERE vk_id = '{vk_id}' ON CONFLICT DO NOTHING;"""
         )
 
-
-def insert_data_seen_users(vk_id, offset):
-    """ВСТАВКА ДАННЫХ В ТАБЛИЦУ SEEN_USERS"""
-    with connection.cursor() as cursor:
-        cursor.execute(
-            f"""INSERT INTO seen_users (vk_id) 
-            VALUES ('{vk_id}')
-            OFFSET '{offset}';"""
-        )
-
-
-def select(offset):
+def select():
     """ВЫБОРКА ИЗ НЕПРОСМОТРЕННЫХ ЛЮДЕЙ"""
     with connection.cursor() as cursor:
         cursor.execute(
-            f"""SELECT u.first_name,
-                        u.last_name,
-                        u.vk_id,
-                        u.vk_link,
-                        su.vk_id
-                        FROM users AS u
-                        LEFT JOIN seen_users AS su 
-                        ON u.vk_id = su.vk_id
-                        WHERE su.vk_id IS NULL
-                        OFFSET '{offset}';"""
+            f"""SELECT vk_id FROM seen_users;"""
         )
-        return cursor.fetchone()
+        listOfViewed = []
+        for result in cursor:
+           listOfViewed.append(result[0])
+        return listOfViewed
 
 def selectfavorites(offset):
-    """ВЫБОРКА ИЗ НЕПРОСМОТРЕННЫХ ЛЮДЕЙ"""
     with connection.cursor() as cursor:
         cursor.execute(
             f"""SELECT first_name,last_name,vk_id,vk_link FROM favorites OFFSET '{offset}';"""
         )
-        return cursor.fetchone()
+        lists = cursor.fetchone()
+        return lists
 
 def selectusers():
     with connection.cursor() as cursor:
@@ -110,14 +83,6 @@ def selectusers():
             f"""SELECT * FROM seen_users ORDER BY id DESC LIMIT 1;"""
         )
         return cursor.fetchone()
-
-def drop_users():
-    """УДАЛЕНИЕ ТАБЛИЦЫ USERS КАСКАДОМ"""
-    with connection.cursor() as cursor:
-        cursor.execute(
-            """DROP TABLE IF EXISTS users CASCADE;"""
-        )
-        print('[INFO] Table USERS was deleted.')
 
 
 def drop_seen_users():
@@ -137,9 +102,6 @@ def drop_favorites():
         print('[INFO] Table favorites was deleted.')
 
 def creating_database():
-    drop_users()
-    drop_favorites()
-    create_table_users()
     create_table_seen_users()
     create_table_favorites()
 
